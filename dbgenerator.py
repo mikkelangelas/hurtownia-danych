@@ -75,6 +75,8 @@ def generate_element_wyposazenia(num: int, punkty: list, marki: list) -> list:
 
         elementy_wyposazenia.append((i + 1, fk_punkt, fk_marka, typ, cena, rozmiar))
 
+    write_csv(elementy_wyposazenia, "elementy_wyposazenia.csv")
+
     return elementy_wyposazenia
 
 
@@ -82,23 +84,73 @@ def generate_element_wyposazenia(num: int, punkty: list, marki: list) -> list:
 def generate_wypozyczenie(num: int):
     pracownicy = generate_pracownik(200)
     marki = generate_marka()
-    punkty = generate_punkt(5)
-    elementy_wyposazenia = generate_element_wyposazenia(500,  punkty, marki)
+    punkty = generate_punkt(3)
+    elementy_wyposazenia = generate_element_wyposazenia(1000,  punkty, marki)
 
-    dates = pd.read_excel("godziny_otwarcia.xlsx", sheet_name=0)["Data"]
 
-    for d in dates:
+    excel = pd.read_excel("godziny_otwarcia.xlsx", sheet_name=0)
+
+    dates = excel["Data"]
+
+    wypozyczenia = list()
+
+    wypozyczenia_wyposazenia = list()
+
+    id = 1
+
+    for date in range(len(dates)):
         quantity = random.randint(50, 250)
         rented = [False for _ in range(len(elementy_wyposazenia))]
 
-        
+        for _ in range(quantity):
+            price = 0
+            employee = random.choice(pracownicy)[0]
+            point = random.randint(1, len(punkty))
+
+            point_time = excel["Punkt" + str(point)][date].split(" - ")
+
+            open_time = point_time[0] + ":00"
+            if len(open_time.split(":")[0]) == 1:
+                open_time = "0" + open_time
+
+            close_time = point_time[1] + ":00"
+            if len(close_time.split(":")[0]) == 1:
+                close_time = "0" + close_time
+
+            receive_time = datetime.datetime.fromisoformat(dates[date].isoformat().split("T")[0] + " " + open_time) + datetime.timedelta(hours=random.randint(0, 4))
+            return_time = datetime.datetime.fromisoformat(dates[date].isoformat().split("T")[0] + " " + close_time) - datetime.timedelta(hours=random.randint(0, 4))
+
+            diff_time = divmod((return_time - receive_time).total_seconds(), 3600)[0]
+
+            num_equipment = random.randint(1, 5)
+
+            for _ in range(num_equipment):
+                eq_idx = random.randint(0, len(elementy_wyposazenia) - 1)
+
+                while rented[eq_idx] is True:
+                    eq_idx = random.randint(0, len(elementy_wyposazenia) - 1)
+
+                wypozyczenia_wyposazenia.append((id, elementy_wyposazenia[eq_idx][0]))
+                rented[eq_idx] = True
+
+                price += elementy_wyposazenia[eq_idx][4] * diff_time
 
 
-    write_csv(dates, "daty.csv")
+            wypozyczenia.append((id, employee, receive_time, return_time, round(price, 2)))
 
+            id += 1
+
+            if id == num + 1:
+                break
+
+        if id == num + 1:
+            break
+    
+    write_csv(wypozyczenia_wyposazenia, "wypozyczenia_wyposazenia.csv")
+    write_csv(wypozyczenia, "wypozyczenia.csv")
 
 def main():
-    generate_wypozyczenie(int(input("how many? ")))
+    generate_wypozyczenie(int(input("How many: ")))
 
 
 
