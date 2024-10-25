@@ -63,4 +63,4 @@ def generateReviews(start_date, end_date, file):
 start_date = '2000-01-01'
 end_date = '2004-12-31'
 generateHours(start_date, end_date, 'godziny_otwarcia.xlsx')
-#generateReviews(start_date, end_date, 'oceny.xlsx')
+generateReviews(start_date, end_date, 'oceny.xlsx')
