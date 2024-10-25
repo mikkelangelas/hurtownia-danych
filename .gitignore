@@ -1,0 +1,8 @@
+# Environment files
+.vscode/
+.venv/
+__pycache__/
+
+# Generated files
+*.csv
+*.xlsx
