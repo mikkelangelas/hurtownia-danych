@@ -5,6 +5,7 @@ import random
 from numpy import random
 from faker import Faker
 import datetime
+from openpyxl import load_workbook
 
 
 def generateHours(start_date, end_date, file):
@@ -15,13 +16,13 @@ def generateHours(start_date, end_date, file):
                                                   or (d.month == 1 and (d.day == 1 or d.day == 6))
                                                   or (d.month == 11 and (d.day == 1 or d.day == 11)))]
 
-    start_time = datetime.time(8, 0)  # 8 hours, 0 minutes
-    end_time = datetime.time(21, 0)  # 8 hours, 0 minutes
     time_fragments = 4
     time_period = int(len(date_removed)/time_fragments)
     x = [[] for _ in range(time_fragments)]
-    for i in range(time_fragments):
-        x[i] = [f"{int(start_time.hour) - i} - {int(end_time.hour) + i}" for _ in(range(time_period))]
+    x[0] = [f"10 - 22" for _ in(range(time_period))]
+    x[1] = [f"6 - 21" for _ in (range(time_period))]
+    x[2] = [f"7 - 22" for _ in (range(time_period))]
+    x[3] = [f"8 - 20" for _ in (range(time_period))]
 
     punkty = [
         [item for sublist in [x[random.randint(0, time_fragments - 1)] for _ in range(time_fragments)] for item in
@@ -66,12 +67,13 @@ def generateReviews(start_date, end_date, file):
         'Data': date_array,
         'Treść': description
     }
+
     df = pd.DataFrame(data)
 
     df.to_excel(file, index=False)
 
 
 start_date = '2000-01-01'
-end_date = '2004-12-31'
+end_date = '2010-12-31'
 generateHours(start_date, end_date, 'godziny_otwarcia.xlsx')
 generateReviews(start_date, end_date, 'oceny.xlsx')
