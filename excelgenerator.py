@@ -17,16 +17,27 @@ def generateHours(start_date, end_date, file):
 
     start_time = datetime.time(8, 0)  # 8 hours, 0 minutes
     end_time = datetime.time(21, 0)  # 8 hours, 0 minutes
-    punkt1 = [f"{start_time} - {end_time}" for _ in(range(len(date_removed)))]
-    """for date in date_removed:
-        if date.month in ([11,2,3]):
-            punkt1.append(f"{start_time} - {end_time}")
-    """
+    time_fragments = 4
+    time_period = int(len(date_removed)/time_fragments)
+    x = [[] for _ in range(time_fragments)]
+    for i in range(time_fragments):
+        x[i] = [f"{int(start_time.hour) - i} - {int(end_time.hour) + i}" for _ in(range(time_period))]
+
+    punkty = [
+        [item for sublist in [x[random.randint(0, time_fragments - 1)] for _ in range(time_fragments)] for item in
+         sublist]
+        for _ in range(3)
+    ]
+    for i in range(3):
+        while len(punkty[i]) < len(date_removed):
+            punkty[i].extend(punkty[i])  # Duplicate existing elements to increase length
+        punkty[i] = punkty[i][:len(date_removed)]  # Trim to exact length
+
     data = {
         'Data': date_removed,
-        'Punkt1': punkt1,
-        'Punkt2': punkt1,
-        'Punkt3': punkt1
+        'Punkt1': punkty[0],
+        'Punkt2': punkty[1],
+        'Punkt3': punkty[2]
     }
 
     df = pd.DataFrame(data)
