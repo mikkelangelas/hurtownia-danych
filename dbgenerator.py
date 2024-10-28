@@ -14,7 +14,7 @@ def write_csv(items: list, filename: str):
             csv_writer.writerow(i)
 
 
-def generate_pracownik(num: int, filename: str) -> list:
+def generate_pracownik(num: int) -> list:
     pracownicy = list()
 
     fake = Faker(locale="pl_PL")
@@ -24,34 +24,35 @@ def generate_pracownik(num: int, filename: str) -> list:
 
     idx = int(0.75 * num)
 
-    write_csv(pracownicy[:idx], filename)
+    write_csv(pracownicy[:idx], "dane/pracownik1.csv")
+    write_csv(pracownicy[idx:], "dane/pracownik2.csv")
 
-    return pracownicy
+    return pracownicy[:idx], pracownicy[idx:]
 
 
-def generate_punkt(num: int, filename: str) -> list:
+def generate_punkt(num: int) -> list:
     punkty = list()
 
     for i in range(num):
         punkty.append((i + 1, random.randint(20, 50), random.randint(20, 50), random.randint(10, 40), random.randint(20, 80), random.randint(10, 40)))
 
-    write_csv(punkty, filename)
+    write_csv(punkty, "dane/punkt.csv")
 
     return punkty
 
 
-def generate_marka(filename: str) -> list:
+def generate_marka() -> list:
     marki = list()
 
     for marka in BRANDS:
         marki.append((marka, "+48" + str(random.randint(100000000, 999999999)), marka + "@email.com"))
 
-    write_csv(marki, filename)
+    write_csv(marki, "dane/marka.csv")
 
     return marki
 
 
-def generate_element_wyposazenia(num: int, punkty: list, marki: list, filename: str) -> list:
+def generate_element_wyposazenia(num: int, punkty: list, marki: list) -> list:
     elementy_wyposazenia = list()
 
     for i in range(num):
@@ -77,22 +78,23 @@ def generate_element_wyposazenia(num: int, punkty: list, marki: list, filename: 
 
         elementy_wyposazenia.append((i + 1, fk_punkt, fk_marka, typ, cena, rozmiar))
 
-    write_csv(elementy_wyposazenia, filename)
+    idx = int(0.95 * num)
 
-    return elementy_wyposazenia
+    write_csv(elementy_wyposazenia[:idx], "dane/element_wyposazenia1.csv")
+    write_csv(elementy_wyposazenia[idx:], "dane/element_wyposazenia2.csv")
 
-
-
-def generate_wypozyczenie(num: int):
-    pracownicy1 = generate_pracownik(150, "pracownik1.csv")
-    pracownicy2 = generate_pracownik(50, "pracownik2.csv")
-    marki = generate_marka("marka.csv")
-    punkty = generate_punkt(3, "punkt.csv")
-    elementy_wyposazenia1 = generate_element_wyposazenia(3000, punkty, marki, "element_wyposazenia1.csv")
-    elementy_wyposazenia2 = generate_element_wyposazenia(200, punkty, marki, "element_wyposazeni2.csv")
+    return elementy_wyposazenia[:idx], elementy_wyposazenia[idx:]
 
 
-    excel = pd.read_excel("godziny_otwarcia.xlsx", sheet_name=0)
+
+def generate_wypozyczenie():
+    pracownicy1, pracownicy2 = generate_pracownik(200)
+    marki = generate_marka()
+    punkty = generate_punkt(3)
+    elementy_wyposazenia1, elementy_wyposazenia2 = generate_element_wyposazenia(3200, punkty, marki)
+
+
+    excel = pd.read_excel("dane/godziny_otwarcia.xlsx", sheet_name=0)
 
     dates = excel["Data"]
 
@@ -163,13 +165,13 @@ def generate_wypozyczenie(num: int):
 
             id += 1
 
-    write_csv(wypozyczenia_wyposazenia1, "wypozyczenie_wyposazenia1.csv")
-    write_csv(wypozyczenia1, "wypozyczenie1.csv")
-    write_csv(wypozyczenia_wyposazenia2, "wypozyczenie_wyposazenia2.csv")
-    write_csv(wypozyczenia2, "wypozyczenie2.csv")
+    write_csv(wypozyczenia_wyposazenia1, "dane/wypozyczenie_wyposazenia1.csv")
+    write_csv(wypozyczenia1, "dane/wypozyczenie1.csv")
+    write_csv(wypozyczenia_wyposazenia2, "dane/wypozyczenie_wyposazenia2.csv")
+    write_csv(wypozyczenia2, "dane/wypozyczenie2.csv")
 
 def main():
-    generate_wypozyczenie(int(input("How many: ")))
+    generate_wypozyczenie()
 
 
 
