@@ -7,49 +7,51 @@ from faker import Faker
 from constants import *
 
 def write_csv(items: list, filename: str):
-    with open(filename, "w", encoding="utf-8") as csv_file:
+    with open(filename, "w", encoding="utf-8", newline="") as csv_file:
         csv_writer = csv.writer(csv_file)
 
         for i in items:
             csv_writer.writerow(i)
 
 
-def generate_pracownik(num: int) -> list:
+def generate_pracownik(num: int, filename: str) -> list:
     pracownicy = list()
 
-    fake = Faker()
+    fake = Faker(locale="pl_PL")
 
     for i in range(num):
         pracownicy.append((i + 1, fake.first_name(), fake.last_name(), "+48" + str(random.randint(100000000, 999999999))))
 
-    write_csv(pracownicy, "pracownicy.csv")
+    idx = int(0.75 * num)
+
+    write_csv(pracownicy[:idx], filename)
 
     return pracownicy
 
 
-def generate_punkt(num: int) -> list:
+def generate_punkt(num: int, filename: str) -> list:
     punkty = list()
 
     for i in range(num):
         punkty.append((i + 1, random.randint(20, 50), random.randint(20, 50), random.randint(10, 40), random.randint(20, 80), random.randint(10, 40)))
 
-    write_csv(punkty, "punkty.csv")
+    write_csv(punkty, filename)
 
     return punkty
 
 
-def generate_marka() -> list:
+def generate_marka(filename: str) -> list:
     marki = list()
 
     for marka in BRANDS:
         marki.append((marka, "+48" + str(random.randint(100000000, 999999999)), marka + "@email.com"))
 
-    write_csv(marki, "marka.csv")
+    write_csv(marki, filename)
 
     return marki
 
 
-def generate_element_wyposazenia(num: int, punkty: list, marki: list) -> list:
+def generate_element_wyposazenia(num: int, punkty: list, marki: list, filename: str) -> list:
     elementy_wyposazenia = list()
 
     for i in range(num):
@@ -75,31 +77,45 @@ def generate_element_wyposazenia(num: int, punkty: list, marki: list) -> list:
 
         elementy_wyposazenia.append((i + 1, fk_punkt, fk_marka, typ, cena, rozmiar))
 
-    write_csv(elementy_wyposazenia, "elementy_wyposazenia.csv")
+    write_csv(elementy_wyposazenia, filename)
 
     return elementy_wyposazenia
 
 
 
 def generate_wypozyczenie(num: int):
-    pracownicy = generate_pracownik(200)
-    marki = generate_marka()
-    punkty = generate_punkt(3)
-    elementy_wyposazenia = generate_element_wyposazenia(1000,  punkty, marki)
+    pracownicy1 = generate_pracownik(150, "pracownik1.csv")
+    pracownicy2 = generate_pracownik(50, "pracownik2.csv")
+    marki = generate_marka("marka.csv")
+    punkty = generate_punkt(3, "punkt.csv")
+    elementy_wyposazenia1 = generate_element_wyposazenia(3000, punkty, marki, "element_wyposazenia1.csv")
+    elementy_wyposazenia2 = generate_element_wyposazenia(200, punkty, marki, "element_wyposazeni2.csv")
 
 
     excel = pd.read_excel("godziny_otwarcia.xlsx", sheet_name=0)
 
     dates = excel["Data"]
 
-    wypozyczenia = list()
+    wypozyczenia1 = list()
+    wypozyczenia2 = list()
 
-    wypozyczenia_wyposazenia = list()
+    wypozyczenia_wyposazenia1 = list()
+    wypozyczenia_wyposazenia2 = list()
 
     id = 1
 
+    idx = int(0.75 * len(dates))
+
     for date in range(len(dates)):
-        quantity = random.randint(50, 250)
+        quantity = random.randint(500, 800)
+        
+        if date < idx:
+            pracownicy = pracownicy1
+            elementy_wyposazenia = elementy_wyposazenia1
+        else:
+            pracownicy = pracownicy1 + pracownicy2
+            elementy_wyposazenia = elementy_wyposazenia1 + elementy_wyposazenia2
+
         rented = [False for _ in range(len(elementy_wyposazenia))]
 
         for _ in range(quantity):
@@ -109,11 +125,11 @@ def generate_wypozyczenie(num: int):
 
             point_time = excel["Punkt" + str(point)][date].split(" - ")
 
-            open_time = point_time[0] + ":00"
+            open_time = point_time[0] + ":00:00"
             if len(open_time.split(":")[0]) == 1:
                 open_time = "0" + open_time
 
-            close_time = point_time[1] + ":00"
+            close_time = point_time[1] + ":00:00"
             if len(close_time.split(":")[0]) == 1:
                 close_time = "0" + close_time
 
@@ -130,24 +146,27 @@ def generate_wypozyczenie(num: int):
                 while rented[eq_idx] is True:
                     eq_idx = random.randint(0, len(elementy_wyposazenia) - 1)
 
-                wypozyczenia_wyposazenia.append((id, elementy_wyposazenia[eq_idx][0]))
-                rented[eq_idx] = True
-
+                if date < idx:
+                    wypozyczenia_wyposazenia1.append((id, elementy_wyposazenia[eq_idx][0]))
+                else:
+                    wypozyczenia_wyposazenia2.append((id, elementy_wyposazenia[eq_idx][0]))
+                
                 price += elementy_wyposazenia[eq_idx][4] * diff_time
 
+                rented[eq_idx] = True
 
-            wypozyczenia.append((id, employee, receive_time, return_time, round(price, 2)))
+
+            if date < idx:
+                wypozyczenia1.append((id, employee, receive_time, return_time, round(price, 2)))
+            else:
+                wypozyczenia2.append((id, employee, receive_time, return_time, round(price, 2)))
 
             id += 1
 
-            if id == num + 1:
-                break
-
-        if id == num + 1:
-            break
-    
-    write_csv(wypozyczenia_wyposazenia, "wypozyczenia_wyposazenia.csv")
-    write_csv(wypozyczenia, "wypozyczenia.csv")
+    write_csv(wypozyczenia_wyposazenia1, "wypozyczenie_wyposazenia1.csv")
+    write_csv(wypozyczenia1, "wypozyczenie1.csv")
+    write_csv(wypozyczenia_wyposazenia2, "wypozyczenie_wyposazenia2.csv")
+    write_csv(wypozyczenia2, "wypozyczenie2.csv")
 
 def main():
     generate_wypozyczenie(int(input("How many: ")))
