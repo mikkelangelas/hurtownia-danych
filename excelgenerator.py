@@ -4,8 +4,6 @@ import datetime
 import random
 from numpy import random
 from faker import Faker
-import datetime
-from openpyxl import load_workbook
 
 
 def generateHours(start_date, end_date, file):
@@ -18,15 +16,13 @@ def generateHours(start_date, end_date, file):
 
     time_fragments = 4
     time_period = int(len(date_removed)/time_fragments)
-    x = [[] for _ in range(time_fragments)]
-    x[0] = [f"10 - 22" for _ in(range(time_period))]
-    x[1] = [f"6 - 21" for _ in (range(time_period))]
-    x[2] = [f"7 - 22" for _ in (range(time_period))]
-    x[3] = [f"8 - 20" for _ in (range(time_period))]
 
+    y = ["10-22", "6-21", "7-22", "8-20"]
     punkty = [
-        [item for sublist in [x[random.randint(0, time_fragments - 1)] for _ in range(time_fragments)] for item in
-         sublist]
+        [y[i]
+        for _ in range(time_fragments)
+        for i in [random.randint(0, time_fragments)]
+        for _ in range(time_period)]
         for _ in range(3)
     ]
     for i in range(3):
@@ -58,12 +54,23 @@ def generateReviews(start_date, end_date, file):
 
     row_no = len(date_array)
     description = [fake.sentence() for _ in range(row_no)]
-    rating = random.choice([1, 2, 3, 4, 5], p=[0.1, 0.2, 0.3, 0.3, 0.1], size=row_no)
+    probabilities = [
+        [0.1, 0.2, 0.3, 0.3, 0.1],  # Period 1
+        [0.2, 0.3, 0.2, 0.2, 0.1],  # Period 2
+        [0.3, 0.1, 0.2, 0.3, 0.1],  # Period 3
+        [0.1, 0.3, 0.3, 0.2, 0.1]  # Period 4
+    ]
+    ratings = []
+    for p in probabilities:
+        period_ratings = random.choice([1, 2, 3, 4, 5], size=int(row_no/len(probabilities) + 1), p=p)
+        ratings.extend(period_ratings)
+    ratings = ratings[:row_no]
+
     user = [fake.name() for _ in range(row_no)]
     print("generated ", row_no, " entries")
     data = {
         'UŻytkownik': user,
-        'Ocena': rating,
+        'Ocena': ratings,
         'Data': date_array,
         'Treść': description
     }
